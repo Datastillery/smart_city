@@ -52,15 +52,6 @@ defmodule SmartCity.Helpers do
     Map.put(acc, String.to_atom(field.name), nil)
   end
 
-  @spec merge_empty(map(), map()) :: map()
-  def merge_empty(nil_map, payload) when payload == %{}, do: nil_map
-  def merge_empty(nil_map, payload) when payload == nil, do: nil_map
-  def merge_empty(nil_map, payload), do: Map.merge(nil_map, payload, &empty_resolve/3)
-
-  defp empty_resolve(_key, %{} = nil_map, %{} = payload), do: merge_empty(nil_map, payload)
-  defp empty_resolve(_key, nil_map, payload) when payload == nil, do: nil_map
-  defp empty_resolve(_key, _nil_map, payload), do: payload
-
   @doc """
   Merges two maps into one, including sub maps. Matching keys from the right map will override their corresponding key in the left map.
   """
