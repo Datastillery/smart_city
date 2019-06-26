@@ -3,35 +3,22 @@ defmodule SmartCity.SchemaFillerTest do
   doctest SmartCity.Helpers
   alias SmartCity.SchemaFiller
 
-  describe "merge payload with nil map" do
-    test "empty map" do
+  describe "single level" do
+    test "nil map" do
       schema = [
         %{name: "id", type: "string"},
         %{
-          name: "greatGrandParent",
+          name: "parent",
           type: "map",
-          subSchema: [
-            %{name: "grandParentSibling", type: "string"},
-            %{
-              name: "grandParent",
-              type: "map",
-              subSchema: [
-                %{
-                  name: "parent",
-                  type: "map",
-                  subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-                }
-              ]
-            }
-          ]
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
         }
       ]
 
-      payload = %{id: "id", greatGrandParent: %{grandParent: %{}, grandParentSibling: "sibling"}}
+      payload = %{id: "id", parent: nil}
 
       expected = %{
         id: "id",
-        greatGrandParent: %{grandParentSibling: "sibling", grandParent: %{parent: %{childA: nil, childB: nil}}}
+        parent: nil
       }
 
       actual = SchemaFiller.fill(payload, schema)
@@ -39,59 +26,243 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    # test "nil value" do
-    #   schema = [
-    #     %{name: "id", type: "string"},
-    #     %{
-    #       name: "grandParent",
-    #       type: "map",
-    #       subSchema: [
-    #         %{
-    #           name: "parent",
-    #           type: "map",
-    #           subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-    #         }
-    #       ]
-    #     }
-    #   ]
+    test "empty map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "map",
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+        }
+      ]
 
-    #   payload = %{id: "id", grandParent: nil}
+      payload = %{id: "id", parent: %{}}
 
-    #   expected = %{id: "id", grandParent: %{parent: %{childA: nil, childB: nil}}}
+      expected = %{
+        id: "id",
+        parent: nil
+      }
 
-    #   nil_map = Helpers.empty_map_from_schema(schema)
-    #   actual = Helpers.merge_empty(nil_map, payload)
+      actual = SchemaFiller.fill(payload, schema)
 
-    #   assert expected == actual
-    # end
+      assert expected == actual
+    end
 
-    # test "arrays" do
-    #   schema = [
-    #     %{name: "id", type: "string"},
-    #     %{
-    #       name: "grandParent",
-    #       type: "list",
-    #       itemType: "map",
-    #       subSchema: [
-    #         %{
-    #           name: "parent",
-    #           type: "list",
-    #           itemType: "map",
-    #           subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-    #         }
-    #       ]
-    #     }
-    #   ]
+    test "partial map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "map",
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+        }
+      ]
 
-    #   payload = %{id: "id", grandParent: %{}}
+      payload = %{id: "id", parent: %{childA: "childA"}}
 
-    #   expected = %{id: "id", grandParent: [%{parent: %{childA: nil, childB: nil}}]}
+      expected = %{
+        id: "id",
+        parent: %{childA: "childA", childB: nil}
+      }
 
-    #   nil_map = Helpers.empty_map_from_schema(schema)
-    #   IO.inspect(nil_map, label: "nil map")
-    #   actual = Helpers.merge_empty(nil_map, payload)
+      actual = SchemaFiller.fill(payload, schema)
 
-    #   assert expected == actual
-    # end
+      assert expected == actual
+    end
+
+    test "empty list" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "string"
+        }
+      ]
+
+      payload = %{id: "id", parent: []}
+
+      expected = %{
+        id: "id",
+        parent: []
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+      assert expected == actual
+    end
+
+    test "list with string item" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "string"
+        }
+      ]
+
+      payload = %{id: "id", parent: ["thing"]}
+
+      expected = %{
+        id: "id",
+        parent: ["thing"]
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+      assert expected == actual
+    end
+  end
+
+  describe "two levels" do
+    test "list with empty map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "map",
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+        }
+      ]
+
+      payload = %{id: "id", parent: [%{}]}
+
+      # Should this be empty list or nil?
+      expected = %{
+        id: "id",
+        parent: []
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+      assert expected == actual
+    end
+
+    test "list with partial map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "map",
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+        }
+      ]
+
+      payload = %{id: "id", parent: [%{childA: "childA"}]}
+
+      expected = %{
+        id: "id",
+        parent: [%{childA: "childA", childB: nil}]
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+      assert expected == actual
+    end
+
+    test "list with 2 partial maps" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "map",
+          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+        }
+      ]
+
+      payload = %{id: "id", parent: [%{childA: "childA"}, %{childB: "childB"}]}
+
+      expected = %{
+        id: "id",
+        parent: [%{childA: "childA", childB: nil}, %{childA: nil, childB: "childB"}]
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+      assert expected == actual
+    end
+
+    test "nil grandparent" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "grandParent",
+          type: "map",
+          subSchema: [
+            %{
+              name: "parent",
+              type: "map",
+              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+            }
+          ]
+        }
+      ]
+
+      payload = %{id: "id", grandParent: %{}}
+
+      expected = %{
+        id: "id",
+        grandParent: nil
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+
+      assert expected == actual
+    end
+
+    test "map with empty map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "grandParent",
+          type: "map",
+          subSchema: [
+            %{
+              name: "parent",
+              type: "map",
+              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+            }
+          ]
+        }
+      ]
+
+      payload = %{id: "id", grandParent: %{parent: %{}}}
+
+      expected = %{
+        id: "id",
+        grandParent: %{parent: nil}
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+
+      assert expected == actual
+    end
+
+    test "map with partial map" do
+      schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "grandParent",
+          type: "map",
+          subSchema: [
+            %{
+              name: "parent",
+              type: "map",
+              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+            }
+          ]
+        }
+      ]
+
+      payload = %{id: "id", grandParent: %{parent: %{childA: "childA"}}}
+
+      expected = %{
+        id: "id",
+        grandParent: %{parent: %{childA: "childA", childB: nil}}
+      }
+
+      actual = SchemaFiller.fill(payload, schema)
+
+      assert expected == actual
+    end
   end
 end
