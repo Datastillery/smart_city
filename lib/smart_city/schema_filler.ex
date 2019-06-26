@@ -1,27 +1,25 @@
 defmodule SmartCity.SchemaFiller do
+  @moduledoc false
+
+  @doc """
+  Given a schema, replace a payload's empty maps with nils and add missing keys to maps that don't have their full set of keys.
+  """
   def fill(schema, payload) do
     Enum.reduce(schema, payload, &reducer/2)
   end
 
-  defp reducer(%{name: name, type: "map", subSchema: subSchema} = field, payload) do
-    IO.puts("recurse")
-    IO.inspect(field, label: "field")
-    IO.inspect(payload, label: "payload")
-    IO.inspect(payload, label: "value")
+  defp reducer(%{name: name, type: "map", subSchema: sub_schema}, payload) do
     key = String.to_atom(name)
     value = Map.get(payload, key)
 
     cond do
       value == nil -> payload
       value == %{} -> Map.put(payload, key, nil)
-      true -> Map.put(payload, key, fill(subSchema, value))
+      true -> Map.put(payload, key, fill(sub_schema, value))
     end
   end
 
-  defp reducer(%{name: name, type: "list", subSchema: subSchema} = field, payload) do
-    IO.puts("recurse list")
-    IO.inspect(field, label: "field")
-    IO.inspect(payload, label: "payload")
+  defp reducer(%{name: name, type: "list", subSchema: sub_schema}, payload) do
     key = String.to_atom(name)
     list = Map.get(payload, key)
 
@@ -36,20 +34,18 @@ defmodule SmartCity.SchemaFiller do
         list_values =
           list
           |> Enum.filter(fn item -> item != %{} && item != nil end)
-          |> Enum.map(fn item -> fill(subSchema, item) end)
+          |> Enum.map(fn item -> fill(sub_schema, item) end)
 
         Map.put(payload, key, list_values)
     end
   end
 
-  defp reducer(%{name: name} = field, payload) do
-    IO.puts("catch all")
-    IO.inspect(field, label: "field")
-    IO.inspect(payload, label: "payload")
+  defp reducer(%{name: name}, payload) do
+    key = String.to_atom(name)
 
-    case Map.has_key?(payload, String.to_atom(name)) do
+    case Map.has_key?(payload, key) do
       true -> payload
-      false -> Map.put(payload, String.to_atom(name), nil)
+      false -> Map.put(payload, key, nil)
     end
   end
 end
