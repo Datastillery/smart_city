@@ -38,21 +38,6 @@ defmodule SmartCity.Helpers do
   def to_atom_keys(value), do: value
 
   @doc """
-  Creates a map with all nil values that fufills a given schema
-  """
-  # def empty_map_from_schema(schema, acc \\ %{}) do
-  #   Enum.reduce(schema, acc, fn field, acc -> put_nil_field(field, acc) end)
-  # end
-
-  # defp put_nil_field(%{name: name, subSchema: subSchema}, acc) do
-  #   Map.put(acc, String.to_atom(name), empty_map_from_schema(subSchema, %{}))
-  # end
-
-  # defp put_nil_field(field, acc) do
-  #   Map.put(acc, String.to_atom(field.name), nil)
-  # end
-
-  @doc """
   Merges two maps into one, including sub maps. Matching keys from the right map will override their corresponding key in the left map.
   """
   @spec deep_merge(map(), map()) :: map()
