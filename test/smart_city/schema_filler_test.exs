@@ -4,8 +4,8 @@ defmodule SmartCity.SchemaFillerTest do
   alias SmartCity.SchemaFiller
 
   describe "single level" do
-    test "nil map" do
-      schema = [
+    setup do
+      basic_schema = [
         %{name: "id", type: "string"},
         %{
           name: "parent",
@@ -14,6 +14,22 @@ defmodule SmartCity.SchemaFillerTest do
         }
       ]
 
+      list_schema = [
+        %{name: "id", type: "string"},
+        %{
+          name: "parent",
+          type: "list",
+          itemType: "string"
+        }
+      ]
+
+      [
+        basic_schema: basic_schema,
+        list_schema: list_schema
+      ]
+    end
+
+    test "nil map", %{basic_schema: schema} do
       payload = %{id: "id", parent: nil}
 
       expected = %{
@@ -26,16 +42,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "empty map" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
+    test "empty map", %{basic_schema: schema} do
       payload = %{id: "id", parent: %{}}
 
       expected = %{
@@ -48,16 +55,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "partial map" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
+    test "partial map", %{basic_schema: schema} do
       payload = %{id: "id", parent: %{childA: "childA"}}
 
       expected = %{
@@ -70,16 +68,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "empty list" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "string"
-        }
-      ]
-
+    test "empty list", %{list_schema: schema} do
       payload = %{id: "id", parent: []}
 
       expected = %{
@@ -91,16 +80,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "list with string item" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "string"
-        }
-      ]
-
+    test "list with string item", %{list_schema: schema} do
       payload = %{id: "id", parent: ["thing"]}
 
       expected = %{
@@ -114,8 +94,8 @@ defmodule SmartCity.SchemaFillerTest do
   end
 
   describe "two levels" do
-    test "list with empty map" do
-      schema = [
+    setup do
+      two_level_list_schema = [
         %{name: "id", type: "string"},
         %{
           name: "parent",
@@ -125,107 +105,7 @@ defmodule SmartCity.SchemaFillerTest do
         }
       ]
 
-      payload = %{id: "id", parent: [%{}]}
-
-      expected = %{
-        id: "id",
-        parent: []
-      }
-
-      actual = SchemaFiller.fill(schema, payload)
-      assert expected == actual
-    end
-
-    test "list with nil" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
-      payload = %{id: "id", parent: [nil]}
-
-      expected = %{
-        id: "id",
-        parent: []
-      }
-
-      actual = SchemaFiller.fill(schema, payload)
-      assert expected == actual
-    end
-
-    test "list with one good value and two ignored values" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
-      payload = %{id: "id", parent: [%{}, %{childA: "child"}, nil]}
-
-      expected = %{
-        id: "id",
-        parent: [%{childA: "child", childB: nil}]
-      }
-
-      actual = SchemaFiller.fill(schema, payload)
-      assert expected == actual
-    end
-
-    test "list with partial map" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
-      payload = %{id: "id", parent: [%{childA: "childA"}]}
-
-      expected = %{
-        id: "id",
-        parent: [%{childA: "childA", childB: nil}]
-      }
-
-      actual = SchemaFiller.fill(schema, payload)
-      assert expected == actual
-    end
-
-    test "list with 2 partial maps" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
-
-      payload = %{id: "id", parent: [%{childA: "childA"}, %{childB: "childB"}]}
-
-      expected = %{
-        id: "id",
-        parent: [%{childA: "childA", childB: nil}, %{childA: nil, childB: "childB"}]
-      }
-
-      actual = SchemaFiller.fill(schema, payload)
-      assert expected == actual
-    end
-
-    test "empty map grandparent" do
-      schema = [
+      nested_maps_schema = [
         %{name: "id", type: "string"},
         %{
           name: "grandParent",
@@ -240,6 +120,73 @@ defmodule SmartCity.SchemaFillerTest do
         }
       ]
 
+      [
+        two_level_list_schema: two_level_list_schema,
+        nested_maps_schema: nested_maps_schema
+      ]
+    end
+
+    test "list with empty map", %{two_level_list_schema: schema} do
+      payload = %{id: "id", parent: [%{}]}
+
+      expected = %{
+        id: "id",
+        parent: []
+      }
+
+      actual = SchemaFiller.fill(schema, payload)
+      assert expected == actual
+    end
+
+    test "list with nil", %{two_level_list_schema: schema} do
+      payload = %{id: "id", parent: [nil]}
+
+      expected = %{
+        id: "id",
+        parent: []
+      }
+
+      actual = SchemaFiller.fill(schema, payload)
+      assert expected == actual
+    end
+
+    test "list with one good value and two ignored values", %{two_level_list_schema: schema} do
+      payload = %{id: "id", parent: [%{}, %{childA: "child"}, nil]}
+
+      expected = %{
+        id: "id",
+        parent: [%{childA: "child", childB: nil}]
+      }
+
+      actual = SchemaFiller.fill(schema, payload)
+      assert expected == actual
+    end
+
+    test "list with partial map", %{two_level_list_schema: schema} do
+      payload = %{id: "id", parent: [%{childA: "childA"}]}
+
+      expected = %{
+        id: "id",
+        parent: [%{childA: "childA", childB: nil}]
+      }
+
+      actual = SchemaFiller.fill(schema, payload)
+      assert expected == actual
+    end
+
+    test "list with 2 partial maps", %{two_level_list_schema: schema} do
+      payload = %{id: "id", parent: [%{childA: "childA"}, %{childB: "childB"}]}
+
+      expected = %{
+        id: "id",
+        parent: [%{childA: "childA", childB: nil}, %{childA: nil, childB: "childB"}]
+      }
+
+      actual = SchemaFiller.fill(schema, payload)
+      assert expected == actual
+    end
+
+    test "empty map grandparent", %{nested_maps_schema: schema} do
       payload = %{id: "id", grandParent: %{}}
 
       expected = %{
@@ -252,22 +199,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "map with empty map" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "grandParent",
-          type: "map",
-          subSchema: [
-            %{
-              name: "parent",
-              type: "map",
-              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-            }
-          ]
-        }
-      ]
-
+    test "map with empty map", %{nested_maps_schema: schema} do
       payload = %{id: "id", grandParent: %{parent: %{}}}
 
       expected = %{
@@ -280,22 +212,7 @@ defmodule SmartCity.SchemaFillerTest do
       assert expected == actual
     end
 
-    test "map with partial map" do
-      schema = [
-        %{name: "id", type: "string"},
-        %{
-          name: "grandParent",
-          type: "map",
-          subSchema: [
-            %{
-              name: "parent",
-              type: "map",
-              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-            }
-          ]
-        }
-      ]
-
+    test "map with partial map", %{nested_maps_schema: schema} do
       payload = %{id: "id", grandParent: %{parent: %{childA: "childA"}}}
 
       expected = %{
