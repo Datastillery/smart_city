@@ -3,22 +3,34 @@ defmodule SmartCity.SchemaFiller do
     Enum.reduce(schema, payload, &reducer/2)
   end
 
-  defp reducer(%{name: name, type: "map"} = field, payload) do
-    fill(field, payload)
-  end
-
   defp reducer(schema, payload) when payload == %{} do
-    # generate nils all the way down
+    IO.puts("empty map")
+    IO.inspect(field, label: "field")
+    IO.inspect(payload, label: "payload")
     nil
   end
 
   defp reducer(schema, nil) do
-    # generate nils all the way down
+    IO.puts("nil payload")
+    IO.inspect(field, label: "field")
+    IO.inspect(payload, label: "payload")
     nil
   end
 
-  defp reducer(field, payload) do
+  defp reducer(%{name: name, type: "map", subSchema: schema} = field, payload) do
+    IO.puts("recurse")
     IO.inspect(field, label: "field")
-    payload
+    IO.inspect(payload, label: "payload")
+    fill(schema, payload)
+  end
+
+  defp reducer(field, payload) do
+    IO.puts("catch all")
+    IO.inspect(field, label: "field")
+    IO.inspect(payload, label: "payload")
+    value = Map.get(payload, field.name)
+    IO.inspect(value, label: "value")
+
+    value
   end
 end

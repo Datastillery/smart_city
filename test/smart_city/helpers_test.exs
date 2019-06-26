@@ -66,55 +66,55 @@ defmodule SmartCity.HelpersTest do
     end
   end
 
-  describe "empty_map_from_schema" do
-    test "one level deep" do
-      schema = [
-        %{
-          name: "parent",
-          type: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
+  # describe "empty_map_from_schema" do
+  #   test "one level deep" do
+  #     schema = [
+  #       %{
+  #         name: "parent",
+  #         type: "map",
+  #         subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+  #       }
+  #     ]
 
-      expected = %{parent: %{childA: nil, childB: nil}}
+  #     expected = %{parent: %{childA: nil, childB: nil}}
 
-      assert expected == Helpers.empty_map_from_schema(schema)
-    end
+  #     assert expected == Helpers.empty_map_from_schema(schema)
+  #   end
 
-    test "contains list" do
-      schema = [
-        %{
-          name: "parent",
-          type: "list",
-          itemType: "map",
-          subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-        }
-      ]
+  #   test "contains list" do
+  #     schema = [
+  #       %{
+  #         name: "parent",
+  #         type: "list",
+  #         itemType: "map",
+  #         subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+  #       }
+  #     ]
 
-      expected = %{parent: []}
-      # expected = %{parent: [%{childA: nil, childB: nil}]}
+  #     expected = %{parent: []}
+  #     # expected = %{parent: [%{childA: nil, childB: nil}]}
 
-      assert expected == Helpers.empty_map_from_schema(schema)
-    end
+  #     assert expected == Helpers.empty_map_from_schema(schema)
+  #   end
 
-    test "two levels deep" do
-      schema = [
-        %{
-          name: "grandParent",
-          type: "map",
-          subSchema: [
-            %{
-              name: "parent",
-              type: "map",
-              subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
-            }
-          ]
-        }
-      ]
+  #   test "two levels deep" do
+  #     schema = [
+  #       %{
+  #         name: "grandParent",
+  #         type: "map",
+  #         subSchema: [
+  #           %{
+  #             name: "parent",
+  #             type: "map",
+  #             subSchema: [%{name: "childA", type: "string"}, %{name: "childB", type: "string"}]
+  #           }
+  #         ]
+  #       }
+  #     ]
 
-      expected = %{grandParent: %{parent: %{childA: nil, childB: nil}}}
+  #     expected = %{grandParent: %{parent: %{childA: nil, childB: nil}}}
 
-      assert expected == Helpers.empty_map_from_schema(schema)
-    end
-  end
+  #     assert expected == Helpers.empty_map_from_schema(schema)
+  #   end
+  # end
 end
